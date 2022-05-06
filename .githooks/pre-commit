@@ -1,0 +1,35 @@
+#!/bin/bash
+STAGED_FILES=($(git diff --cached --name-only --diff-filter=ACM | grep ".tsx\{0,1\}$"))
+
+if [[ "$STAGED_FILES" = "" ]]; then
+  echo "No files to check. pre-commit exit"
+  exit 0
+fi
+
+# type check
+echo "Check type ${#STAGED_FILES[@]} files"
+
+npx tsc --noEmit
+TYPE_CHECK_EXIT="$?"
+
+if [[ "$TYPE_CHECK_EXIT" == 0 ]]; then
+  printf "\n\033[0;32mtype check success\033[0m\n"
+else
+  printf "\n\033[0;31mtype check failed\033[0m\n"
+  exit 1
+fi
+
+# lint
+echo "Check lint ${#STAGED_FILES[@]} files"
+
+npx eslint "${STAGED_FILES[@]}"
+ESLINT_EXIT="$?"
+
+if [[ "$ESLINT_EXIT" == 0 ]]; then
+  printf "\n\033[0;32mlint success\033[0m\n"
+else
+  printf "\n\033[0;31mlint failed\033[0m\n"
+  exit 1
+fi
+
+exit $?
